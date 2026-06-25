@@ -75,6 +75,8 @@ export async function updateEventAction(
   const id = String(formData.get("id") ?? "");
   if (!id) return { ok: false, error: "id required" };
 
+  const muxPlayback = String(formData.get("mux_playback_id") ?? "").trim();
+
   const patch: Record<string, unknown> = {
     title: String(formData.get("title") ?? "").trim(),
     subtitle: (String(formData.get("subtitle") ?? "").trim() || null),
@@ -83,8 +85,8 @@ export async function updateEventAction(
     venue: String(formData.get("venue") ?? "").trim() || null,
     venue_city: String(formData.get("venue_city") ?? "").trim() || null,
     description: String(formData.get("description") ?? "").trim() || null,
-    poster_url: String(formData.get("poster_url") ?? "").trim() || null,
     status: String(formData.get("status") ?? "upcoming"),
+    mux_playback_id: muxPlayback || null,
     prices: {
       livePass: Number(formData.get("live_pass") ?? 9),
       vodPass: Number(formData.get("vod_pass") ?? 5),
@@ -102,6 +104,54 @@ export async function updateEventAction(
   revalidatePath("/events");
   revalidatePath("/");
   return { ok: true };
+}
+
+export async function uploadPosterAction(
+  formData: FormData,
+): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  await requireAdmin();
+  const file = formData.get("file");
+  const eventId = String(formData.get("event_id") ?? "");
+  if (!(file instanceof File)) {
+    return { ok: false, error: "Nije primljen fajl." };
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    return { ok: false, error: "Fajl je veći od 10 MB." };
+  }
+  if (!file.type.startsWith("image/")) {
+    return { ok: false, error: "Samo slike (PNG/JPG/WEBP)." };
+  }
+
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "png";
+  const fname = `${eventId || "anon"}-${Date.now()}.${ext}`;
+
+  const supabase = supabaseAdmin();
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const { error: upErr } = await supabase.storage
+    .from("posters")
+    .upload(fname, buffer, {
+      contentType: file.type,
+      upsert: true,
+    });
+  if (upErr) {
+    return { ok: false, error: upErr.message };
+  }
+
+  const { data: pub } = supabase.storage.from("posters").getPublicUrl(fname);
+  const publicUrl = pub.publicUrl;
+
+  if (eventId) {
+    await supabase
+      .from("events")
+      .update({ poster_url: publicUrl })
+      .eq("id", eventId);
+    revalidatePath("/admin/events");
+    revalidatePath("/admin");
+    revalidatePath("/events");
+    revalidatePath("/");
+  }
+
+  return { ok: true, url: publicUrl };
 }
 
 export async function deleteEventAction(formData: FormData): Promise<void> {

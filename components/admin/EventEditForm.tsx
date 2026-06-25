@@ -14,6 +14,7 @@ import {
   TextArea,
   TextInput,
 } from "./ui";
+import PosterUpload from "./PosterUpload";
 
 type EventRow = {
   id: string;
@@ -27,6 +28,7 @@ type EventRow = {
   description: string | null;
   poster_url: string | null;
   status: string;
+  mux_playback_id: string | null;
   prices: { livePass?: number; vodPass?: number; bundlePass?: number };
 };
 
@@ -87,13 +89,22 @@ export default function EventEditForm({ event }: { event: EventRow }) {
         />
       </div>
 
-      <div>
-        <Label>Poster URL</Label>
+      <div className="md:col-span-2">
+        <PosterUpload eventId={event.id} currentUrl={event.poster_url} />
+      </div>
+
+      <div className="md:col-span-2">
+        <Label>Mux Playback ID</Label>
         <TextInput
-          name="poster_url"
-          defaultValue={event.poster_url ?? ""}
-          placeholder="/posters/bif-x.png"
+          name="mux_playback_id"
+          defaultValue={event.mux_playback_id ?? ""}
+          placeholder="npr. Jgo5Ipbvg1PqF9OrIXiVuV8bpwP5Nei73rpVdFDMCxE"
+          className="font-mono text-xs"
         />
+        <p className="mt-1 text-xs text-white/40">
+          Ako koristiš Mux free plan, upload-uj video na dashboard.mux.com → kreiraj Signed playback ID → paste ovde.
+          Za live event (Pay-as-you-go plan), koristi Stream Controls desno.
+        </p>
       </div>
 
       <div>

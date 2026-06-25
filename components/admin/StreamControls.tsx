@@ -61,7 +61,30 @@ export default function StreamControls({
             URL i stream key za OBS.
           </p>
           {state && state.ok === false ? (
-            <p className="text-sm text-red-400">{state.error}</p>
+            <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3 text-sm">
+              <p className="font-bold text-red-400">{state.error}</p>
+              {state.error.toLowerCase().includes("free plan") ? (
+                <p className="mt-2 text-xs text-white/60">
+                  Live streams traže Pay-as-you-go plan (košta $0 dok ne pustiš
+                  stream). Otvori{" "}
+                  <a
+                    href="https://dashboard.mux.com/settings/billing"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-bif-gold underline"
+                  >
+                    Mux Billing
+                  </a>{" "}
+                  i dodaj kreditnu karticu. Tek pri prvom live event-u Mux
+                  počinje da naplaćuje po minutu.
+                  <br />
+                  <br />
+                  Za VOD test sad: upload-uj video na dashboard.mux.com sa
+                  Signed playback policy i paste playback ID u polje na formi
+                  levo.
+                </p>
+              ) : null}
+            </div>
           ) : null}
           <PrimaryButton type="submit">+ Kreiraj Mux stream</PrimaryButton>
         </form>
