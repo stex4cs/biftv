@@ -29,15 +29,7 @@ export async function POST(req: Request) {
   if (error) {
     console.error("[subscribe] insert failed:", error);
     return NextResponse.json(
-      {
-        error: "Greška, pokušaj ponovo.",
-        debug: {
-          message: error.message,
-          code: error.code,
-          details: error.details,
-          hint: error.hint,
-        },
-      },
+      { error: "Greška, pokušaj ponovo." },
       { status: 500 },
     );
   }

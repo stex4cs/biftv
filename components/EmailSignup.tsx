@@ -22,10 +22,7 @@ export default function EmailSignup({ source = "homepage" }: { source?: string }
       const data = await res.json();
       if (!res.ok) {
         setStatus("error");
-        const dbg = data.debug
-          ? ` [${data.debug.code ?? "?"}] ${data.debug.message ?? ""}`
-          : "";
-        setMessage((data.error ?? "Greška.") + dbg);
+        setMessage(data.error ?? "Greška.");
         return;
       }
       setStatus("ok");
