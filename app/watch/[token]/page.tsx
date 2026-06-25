@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import MuxPlayer from "@/components/MuxPlayer";
+import WatchSession from "@/components/WatchSession";
 import { getValidAccessToken } from "@/lib/access";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { signedPlaybackTokens } from "@/lib/playback";
@@ -52,20 +53,22 @@ export default async function WatchPage({
       <Header />
       <main className="mx-auto max-w-6xl px-4 py-8">
         <div className="overflow-hidden rounded-xl border border-white/10 bg-black">
-          <MuxPlayer
-            playbackId={event.mux_playback_id}
-            playbackToken={tokens.playback}
-            thumbnailToken={tokens.thumbnail}
-            storyboardToken={tokens.storyboard}
-            streamType={isLive ? "live" : "on-demand"}
-            title={event.title}
-            poster={event.poster_url ?? undefined}
-            metadata={{
-              video_title: event.title,
-              video_id: event.id,
-              viewer_user_id: access.user_email,
-            }}
-          />
+          <WatchSession token={params.token} email={access.user_email}>
+            <MuxPlayer
+              playbackId={event.mux_playback_id}
+              playbackToken={tokens.playback}
+              thumbnailToken={tokens.thumbnail}
+              storyboardToken={tokens.storyboard}
+              streamType={isLive ? "live" : "on-demand"}
+              title={event.title}
+              poster={event.poster_url ?? undefined}
+              metadata={{
+                video_title: event.title,
+                video_id: event.id,
+                viewer_user_id: access.user_email,
+              }}
+            />
+          </WatchSession>
         </div>
 
         <div className="mt-6 rounded-xl border border-white/10 bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] p-6">
