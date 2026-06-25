@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Countdown } from "@/components/Countdown";
@@ -26,7 +27,20 @@ export default async function EventDetailPage({
   return (
     <>
       <Header />
-      <main className="max-w-5xl mx-auto px-6 py-16">
+      {event.posterUrl ? (
+        <div className="relative h-[420px] w-full overflow-hidden">
+          <Image
+            src={event.posterUrl}
+            alt={event.title}
+            fill
+            sizes="100vw"
+            className="object-cover object-center"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-bif-black" />
+        </div>
+      ) : null}
+      <main className={`max-w-5xl mx-auto px-6 ${event.posterUrl ? "-mt-24 relative z-10 pb-16" : "py-16"}`}>
         {/* HEADER */}
         <div className="text-center mb-12">
           {event.sponsorLine && (

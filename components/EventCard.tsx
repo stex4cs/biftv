@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { EventBase } from "@/lib/types";
 import { formatEventDate, formatPrice } from "@/lib/format";
 
@@ -19,7 +20,17 @@ export function EventCard({ event }: { event: EventBase }) {
       className="group block bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border border-white/10 rounded-2xl overflow-hidden hover:border-bif-red/50 hover:-translate-y-1 transition-all"
     >
       <div className="relative aspect-video bg-black overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-bif-red/30 via-black to-black opacity-80 group-hover:opacity-60 transition-opacity" />
+        {event.posterUrl ? (
+          <Image
+            src={event.posterUrl}
+            alt={event.title}
+            fill
+            sizes="(max-width: 768px) 100vw, 50vw"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            priority={event.status === "live" || event.status === "upcoming"}
+          />
+        ) : null}
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent group-hover:from-black/90 transition-opacity" />
         <div className="absolute top-3 right-3">
           <span
             className={`inline-block ${statusBadge.color} text-white text-[10px] font-oswald font-extrabold tracking-widest px-3 py-1 rounded-full`}
