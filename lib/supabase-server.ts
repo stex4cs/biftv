@@ -14,5 +14,9 @@ export function supabaseAdmin() {
   }
   return createClient(url, secret, {
     auth: { persistSession: false, autoRefreshToken: false },
+    global: {
+      fetch: (input, init) =>
+        fetch(input, { ...init, cache: "no-store" }),
+    },
   });
 }

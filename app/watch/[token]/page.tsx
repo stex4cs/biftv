@@ -7,6 +7,8 @@ import { supabaseAdmin } from "@/lib/supabase-server";
 import { signedPlaybackTokens } from "@/lib/playback";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
 
 export default async function WatchPage({
   params,
