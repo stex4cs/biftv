@@ -3,12 +3,17 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Countdown } from "@/components/Countdown";
 import { EventCard } from "@/components/EventCard";
-import { getEvents, getFeaturedUpcoming } from "@/lib/mock-events";
+import EmailSignup from "@/components/EmailSignup";
+import { getEvents, getFeaturedUpcoming } from "@/lib/events";
 import { formatPrice } from "@/lib/format";
 
-export default function Home() {
-  const featured = getFeaturedUpcoming();
-  const events = getEvents();
+export const revalidate = 60;
+
+export default async function Home() {
+  const [featured, events] = await Promise.all([
+    getFeaturedUpcoming(),
+    getEvents(),
+  ]);
 
   return (
     <>
@@ -112,6 +117,22 @@ export default function Home() {
               <EventCard key={e.id} event={e} />
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* EMAIL SIGNUP */}
+      <section className="relative px-6 py-16">
+        <div className="mx-auto max-w-2xl rounded-2xl border border-bif-gold/25 bg-gradient-to-br from-[#1a0a0c] to-[#0a0a0a] p-8 text-center shadow-2xl">
+          <div className="font-oswald uppercase text-bif-red text-xs tracking-[3px] font-bold mb-2">
+            STAY IN THE LOOP
+          </div>
+          <h3 className="font-oswald font-extrabold text-2xl md:text-3xl uppercase tracking-wider mb-3">
+            BIF 3 najava stiže prva
+          </h3>
+          <p className="text-white/65 text-sm mb-6">
+            Ostavi email i prvi saznaj datum, mečeve i kad pasovi izlaze na prodaju.
+          </p>
+          <EmailSignup source="biftv_home" />
         </div>
       </section>
 

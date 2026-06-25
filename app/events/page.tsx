@@ -1,10 +1,13 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { EventCard } from "@/components/EventCard";
-import { getEvents } from "@/lib/mock-events";
+import { getEvents } from "@/lib/events";
+import type { EventBase } from "@/lib/types";
 
-export default function EventsPage() {
-  const events = getEvents();
+export const revalidate = 60;
+
+export default async function EventsPage() {
+  const events = await getEvents();
   const upcoming = events.filter((e) => e.status === "upcoming");
   const live = events.filter((e) => e.status === "live");
   const past = events.filter((e) => e.status === "vod" || e.status === "ended");
@@ -61,7 +64,7 @@ function Section({
   label: string;
   title: string;
   color: string;
-  events: ReturnType<typeof getEvents>;
+  events: EventBase[];
 }) {
   return (
     <section className="mb-16">

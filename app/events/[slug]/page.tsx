@@ -4,15 +4,17 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Countdown } from "@/components/Countdown";
 import { FightCard } from "@/components/FightCard";
-import { getEventBySlug } from "@/lib/mock-events";
+import { getEventBySlug } from "@/lib/events";
 import { formatEventDate, formatPrice } from "@/lib/format";
 
-export default function EventDetailPage({
+export const revalidate = 60;
+
+export default async function EventDetailPage({
   params,
 }: {
   params: { slug: string };
 }) {
-  const event = getEventBySlug(params.slug);
+  const event = await getEventBySlug(params.slug);
   if (!event) notFound();
 
   const d = formatEventDate(event.date);

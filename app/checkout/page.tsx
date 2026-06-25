@@ -1,15 +1,17 @@
 import Link from "next/link";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { getEventBySlug } from "@/lib/mock-events";
+import { getEventBySlug } from "@/lib/events";
 import { formatPrice } from "@/lib/format";
 
-export default function CheckoutPage({
+export default async function CheckoutPage({
   searchParams,
 }: {
   searchParams: { event?: string; type?: string };
 }) {
-  const event = searchParams.event ? getEventBySlug(searchParams.event) : null;
+  const event = searchParams.event
+    ? await getEventBySlug(searchParams.event)
+    : null;
   const passType = searchParams.type === "vod" ? "vod" : "live";
 
   if (!event) {
