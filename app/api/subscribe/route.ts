@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(req: Request) {
@@ -26,7 +29,15 @@ export async function POST(req: Request) {
   if (error) {
     console.error("[subscribe] insert failed:", error);
     return NextResponse.json(
-      { error: "Greška, pokušaj ponovo." },
+      {
+        error: "Greška, pokušaj ponovo.",
+        debug: {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+        },
+      },
       { status: 500 },
     );
   }
