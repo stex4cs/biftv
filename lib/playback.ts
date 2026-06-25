@@ -33,7 +33,6 @@ export function signMuxPlaybackToken(opts: {
       sub: opts.playbackId,
       aud,
       exp,
-      kid: keyId,
       ...(opts.params ?? {}),
     },
     privateKey,
