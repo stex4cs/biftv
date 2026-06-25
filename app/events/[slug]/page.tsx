@@ -6,6 +6,7 @@ import { Countdown } from "@/components/Countdown";
 import { FightCard } from "@/components/FightCard";
 import { getEventBySlug } from "@/lib/events";
 import { formatEventDate, formatPrice } from "@/lib/format";
+import type { EventBase } from "@/lib/types";
 
 export const revalidate = 60;
 
@@ -120,8 +121,7 @@ export default async function EventDetailPage({
   );
 }
 
-function PassButtons({ event }: { event: ReturnType<typeof getEventBySlug> }) {
-  if (!event) return null;
+function PassButtons({ event }: { event: EventBase }) {
   const isVod = event.status === "vod";
 
   return (
