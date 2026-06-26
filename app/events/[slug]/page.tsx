@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -10,6 +11,37 @@ import { formatEventDate, formatPrice } from "@/lib/format";
 import type { EventBase } from "@/lib/types";
 
 export const revalidate = 60;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
+  const event = await getEventBySlug(params.slug);
+  if (!event) return { title: "Event nije pronađen" };
+
+  const d = formatEventDate(event.date);
+  const dateLabel = `${d.day}.${event.date.slice(5, 7)}.${d.year}`;
+  const desc =
+    event.description?.slice(0, 160) ??
+    `${event.title} — ${event.subtitle ?? "Balkan Influence Fighting"} · ${dateLabel} · ${event.venueCity}`;
+
+  return {
+    title: event.title,
+    description: desc,
+    openGraph: {
+      title: `${event.title} — BIF.TV`,
+      description: desc,
+      type: "video.movie",
+      url: `/events/${event.slug}`,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${event.title} — BIF.TV`,
+      description: desc,
+    },
+  };
+}
 
 export default async function EventDetailPage({
   params,

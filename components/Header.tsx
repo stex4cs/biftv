@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { supabaseUser } from "@/lib/supabase-user";
+import HeaderNav from "./HeaderNav";
 
 export async function Header() {
   const supabase = supabaseUser();
@@ -8,7 +9,7 @@ export async function Header() {
   } = await supabase.auth.getUser();
 
   return (
-    <header className="relative z-10 border-b border-white/5 backdrop-blur-md bg-black/30">
+    <header className="relative z-30 border-b border-white/5 backdrop-blur-md bg-black/40">
       <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 group">
           <span
@@ -18,30 +19,7 @@ export async function Header() {
             BIF<span className="text-bif-red">.</span>TV
           </span>
         </Link>
-
-        <nav className="flex items-center gap-6">
-          <Link
-            href="/events"
-            className="font-oswald uppercase text-sm tracking-widest text-white/70 hover:text-white transition-colors"
-          >
-            Events
-          </Link>
-          {user ? (
-            <Link
-              href="/my-passes"
-              className="font-oswald uppercase font-bold text-sm tracking-widest border border-bif-gold/40 text-bif-gold hover:bg-bif-gold/10 px-4 py-2 rounded-md transition-colors"
-            >
-              My Passes
-            </Link>
-          ) : (
-            <Link
-              href="/login"
-              className="font-oswald uppercase font-bold text-sm tracking-widest bg-bif-red hover:bg-bif-red-dark px-4 py-2 rounded-md transition-colors"
-            >
-              Sign In
-            </Link>
-          )}
-        </nav>
+        <HeaderNav signedIn={!!user} />
       </div>
     </header>
   );
