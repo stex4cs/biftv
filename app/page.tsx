@@ -29,6 +29,11 @@ export default async function Home() {
         venueCity: featured.venueCity,
         status: featured.status,
         priceFromEur: featured.prices?.livePass,
+        fights: featured.fights?.map((f) => ({
+          fighter1: f.fighter1,
+          fighter2: f.fighter2,
+          isHandicap: f.isHandicap,
+        })),
       })
     : null;
 

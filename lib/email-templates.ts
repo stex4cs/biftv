@@ -143,6 +143,64 @@ export function welcomeEmail(opts: { siteUrl: string }): {
   };
 }
 
+export function reminderEmail(opts: {
+  eventTitle: string;
+  eventDate: string;
+  watchUrl: string;
+  variant: "T-24h" | "T-1h";
+  venue?: string | null;
+}): { subject: string; html: string; text: string } {
+  const is24 = opts.variant === "T-24h";
+  const eyebrow = is24 ? "SUTRA UŽIVO · TOMORROW LIVE" : "POČINJE ZA 1 SAT · STARTING IN 1H";
+  const heading = is24
+    ? `${opts.eventTitle} kreće za 24h`
+    : `${opts.eventTitle} kreće za sat vremena`;
+  const lead = is24
+    ? "Sve je spremno. Za 24h ti je dovoljan jedan klik da otvoriš stream. Sačuvaj ovaj mail."
+    : "Vreme je. Otvori stream sada da uhvatiš prvu zvonjavu — stream postaje aktivan u sledećih sat vremena.";
+
+  const startLocal = new Date(opts.eventDate).toLocaleString("sr-RS", {
+    timeZone: "Europe/Belgrade",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  const body = `
+    <div style="font-family:'Oswald',Helvetica,Arial,sans-serif;font-weight:700;font-size:11px;letter-spacing:3px;color:${BRAND_RED};text-transform:uppercase;margin-bottom:8px;">
+      ${escapeHtml(eyebrow)}
+    </div>
+    <h1 style="font-family:'Oswald',Helvetica,Arial,sans-serif;font-weight:800;font-size:30px;letter-spacing:1px;color:${TEXT};margin:0 0 16px 0;text-transform:uppercase;">
+      ${escapeHtml(heading)}
+    </h1>
+    <p style="font-size:15px;line-height:1.6;color:${MUTED};margin:0 0 12px 0;">
+      ${escapeHtml(lead)}
+    </p>
+    <p style="font-size:14px;line-height:1.6;color:${BRAND_GOLD};margin:0 0 24px 0;">
+      📅 ${escapeHtml(startLocal)}${opts.venue ? ` · 📍 ${escapeHtml(opts.venue)}` : ""}
+    </p>
+    ${button(opts.watchUrl, is24 ? "▶ OTVORI STREAM SUTRA" : "▶ OTVORI STREAM SADA")}
+    <p style="font-size:12px;line-height:1.5;color:${MUTED};margin:24px 0 0 0;">
+      Link je vezan za jedan uređaj istovremeno. Ako sediš na laptopu pa otvoriš na telefonu — prethodna sesija se zatvara.
+    </p>
+  `;
+
+  return {
+    subject: is24
+      ? `Sutra: ${opts.eventTitle} live na BIF.TV`
+      : `Za 1h: ${opts.eventTitle} kreće uživo`,
+    html: shell({
+      preheader: is24
+        ? `${opts.eventTitle} počinje sutra — link je već u tvom mail-u.`
+        : `${opts.eventTitle} kreće za 1 sat. Otvori stream sad.`,
+      body,
+    }),
+    text: `${heading}\n${lead}\n\n${startLocal}\n\nOtvori stream: ${opts.watchUrl}`,
+  };
+}
+
 export function broadcastEmail(opts: {
   subject: string;
   headline: string;

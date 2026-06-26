@@ -106,6 +106,11 @@ export default async function EventDetailPage({
       venueCity: event.venueCity,
       status: event.status,
       priceFromEur: event.prices?.livePass,
+      fights: event.fights?.map((f) => ({
+        fighter1: f.fighter1,
+        fighter2: f.fighter2,
+        isHandicap: f.isHandicap,
+      })),
     }),
     breadcrumbSchema([
       { name: "BIF.TV", href: "/" },

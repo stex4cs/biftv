@@ -48,6 +48,12 @@ export function websiteSchema() {
 
 type EventStatusKey = "upcoming" | "live" | "ended" | "vod";
 
+type FightLite = {
+  fighter1: string;
+  fighter2: string;
+  isHandicap?: boolean;
+};
+
 export function sportsEventSchema(opts: {
   slug: string;
   title: string;
@@ -59,6 +65,7 @@ export function sportsEventSchema(opts: {
   venueCity?: string | null;
   status: EventStatusKey;
   priceFromEur?: number;
+  fights?: FightLite[];
 }) {
   const url = `${SITE}/events/${opts.slug}`;
   const startDate = opts.date;
@@ -107,6 +114,15 @@ export function sportsEventSchema(opts: {
     image: opts.posterUrl ? [opts.posterUrl] : [`${SITE}/opengraph-image`],
     organizer: { "@id": `${SITE}#organization` },
     sport: "Combat sports",
+    performer:
+      opts.fights && opts.fights.length > 0
+        ? dedupeByName(
+            opts.fights.flatMap((f) => [
+              { "@type": "Person", name: f.fighter1 },
+              { "@type": "Person", name: f.fighter2 },
+            ]),
+          )
+        : [{ "@type": "PerformingGroup", name: "BIF Fighters" }],
     ...(opts.priceFromEur
       ? {
           offers: {
@@ -125,6 +141,19 @@ export function sportsEventSchema(opts: {
         }
       : {}),
   };
+}
+
+function dedupeByName<T extends { name: string }>(items: T[]): T[] {
+  const seen = new Set<string>();
+  const out: T[] = [];
+  for (const item of items) {
+    const key = item.name.toLowerCase().trim();
+    if (key && !seen.has(key)) {
+      seen.add(key);
+      out.push(item);
+    }
+  }
+  return out;
 }
 
 export function videoObjectSchema(opts: {
