@@ -26,6 +26,10 @@ export async function generateMetadata({
     event.description?.slice(0, 160) ??
     `${event.title} — ${event.subtitle ?? "Balkan Influence Fighting"} · ${dateLabel} · ${event.venueCity}`;
 
+  const images = event.posterUrl
+    ? [{ url: event.posterUrl, alt: event.title }]
+    : undefined;
+
   return {
     title: event.title,
     description: desc,
@@ -34,11 +38,13 @@ export async function generateMetadata({
       description: desc,
       type: "video.movie",
       url: `/events/${event.slug}`,
+      images,
     },
     twitter: {
       card: "summary_large_image",
       title: `${event.title} — BIF.TV`,
       description: desc,
+      images,
     },
   };
 }
