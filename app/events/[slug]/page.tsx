@@ -6,9 +6,15 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Countdown } from "@/components/Countdown";
 import { FightCard } from "@/components/FightCard";
+import JsonLd from "@/components/JsonLd";
 import { getEventBySlug } from "@/lib/events";
 import { formatEventDate, formatPrice } from "@/lib/format";
 import type { EventBase } from "@/lib/types";
+import {
+  breadcrumbSchema,
+  sportsEventSchema,
+  videoObjectSchema,
+} from "@/lib/schema";
 
 export const revalidate = 60;
 
@@ -18,31 +24,57 @@ export async function generateMetadata({
   params: { slug: string };
 }): Promise<Metadata> {
   const event = await getEventBySlug(params.slug);
-  if (!event) return { title: "Event nije pronađen" };
+  if (!event) return { title: "Event nije pronađen · Event not found" };
 
   const d = formatEventDate(event.date);
   const dateLabel = `${d.day}.${event.date.slice(5, 7)}.${d.year}`;
+  const venuePart = event.venueCity ?? "Beograd";
+  const statusLabel =
+    event.status === "live"
+      ? "Live Now · Uživo"
+      : event.status === "vod"
+        ? "Replay Available · Replay dostupan"
+        : event.status === "ended"
+          ? "Ended · Završen"
+          : "Upcoming · Uskoro";
+
   const desc =
-    event.description?.slice(0, 160) ??
-    `${event.title} — ${event.subtitle ?? "Balkan Influence Fighting"} · ${dateLabel} · ${event.venueCity}`;
+    event.description?.slice(0, 220) ??
+    `${event.title}${event.subtitle ? " — " + event.subtitle : ""}. ${statusLabel}. Live PPV stream + 48h replay · Gledaj uživo i replay na BIF.TV. ${dateLabel} · ${venuePart}.`;
+
+  const titleSuffix =
+    event.status === "vod"
+      ? "Replay PPV"
+      : event.status === "live"
+        ? "Live PPV Uživo"
+        : "Live PPV Stream Uživo";
+
+  const fullTitle = event.subtitle
+    ? `${event.title} — ${event.subtitle} · ${titleSuffix}`
+    : `${event.title} · ${titleSuffix}`;
 
   const images = event.posterUrl
-    ? [{ url: event.posterUrl, alt: event.title }]
+    ? [{ url: event.posterUrl, alt: event.title, width: 1200, height: 1600 }]
     : undefined;
 
   return {
-    title: event.title,
+    title: fullTitle,
     description: desc,
+    alternates: {
+      canonical: `/events/${event.slug}`,
+    },
     openGraph: {
-      title: `${event.title} — BIF.TV`,
+      title: `${event.title} — BIF.TV · Live PPV Stream`,
       description: desc,
       type: "video.movie",
       url: `/events/${event.slug}`,
       images,
+      locale: "sr_RS",
+      alternateLocale: "en_US",
     },
     twitter: {
       card: "summary_large_image",
-      title: `${event.title} — BIF.TV`,
+      title: `${event.title} · BIF.TV`,
       description: desc,
       images,
     },
@@ -62,8 +94,44 @@ export default async function EventDetailPage({
   const isUpcoming = event.status === "upcoming";
   const isVod = event.status === "vod";
 
+  const schemas: Array<Record<string, unknown>> = [
+    sportsEventSchema({
+      slug: event.slug,
+      title: event.title,
+      subtitle: event.subtitle,
+      description: event.description,
+      date: event.date,
+      posterUrl: event.posterUrl,
+      venue: event.venue,
+      venueCity: event.venueCity,
+      status: event.status,
+      priceFromEur: event.prices?.livePass,
+    }),
+    breadcrumbSchema([
+      { name: "BIF.TV", href: "/" },
+      { name: "Events", href: "/events" },
+      { name: event.title },
+    ]),
+  ];
+
+  if (isVod || isLive) {
+    schemas.push(
+      videoObjectSchema({
+        slug: event.slug,
+        title: event.title,
+        description:
+          event.description ??
+          `${event.title} — Live PPV stream · BIF.TV`,
+        uploadDate: event.date,
+        thumbnailUrl: event.posterUrl,
+        isLive,
+      }),
+    );
+  }
+
   return (
     <>
+      <JsonLd data={schemas} />
       <Header />
       {event.posterUrl ? (
         <div className="relative h-[420px] w-full overflow-hidden">

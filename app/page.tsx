@@ -4,8 +4,10 @@ import { Footer } from "@/components/Footer";
 import { Countdown } from "@/components/Countdown";
 import { EventCard } from "@/components/EventCard";
 import EmailSignup from "@/components/EmailSignup";
+import JsonLd from "@/components/JsonLd";
 import { getEvents, getFeaturedUpcoming } from "@/lib/events";
 import { formatPrice } from "@/lib/format";
+import { sportsEventSchema } from "@/lib/schema";
 
 export const revalidate = 60;
 
@@ -15,8 +17,24 @@ export default async function Home() {
     getEvents(),
   ]);
 
+  const featuredSchema = featured
+    ? sportsEventSchema({
+        slug: featured.slug,
+        title: featured.title,
+        subtitle: featured.subtitle,
+        description: featured.description,
+        date: featured.date,
+        posterUrl: featured.posterUrl,
+        venue: featured.venue,
+        venueCity: featured.venueCity,
+        status: featured.status,
+        priceFromEur: featured.prices?.livePass,
+      })
+    : null;
+
   return (
     <>
+      {featuredSchema ? <JsonLd data={featuredSchema} /> : null}
       <Header />
 
       {/* HERO */}

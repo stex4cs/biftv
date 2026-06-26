@@ -1,10 +1,27 @@
+import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { EventCard } from "@/components/EventCard";
+import JsonLd from "@/components/JsonLd";
 import { getEvents } from "@/lib/events";
+import { breadcrumbSchema, collectionPageSchema } from "@/lib/schema";
 import type { EventBase } from "@/lib/types";
 
 export const revalidate = 60;
+
+export const metadata: Metadata = {
+  title: "Events · All BIF Live PPV i Replay događaji",
+  description:
+    "Lista svih BIF događaja — live now, uskoro i replay-evi. Every Balkan Influence Fighting event live PPV stream and replay.",
+  alternates: { canonical: "/events" },
+  openGraph: {
+    title: "Events · BIF.TV",
+    description:
+      "Svi BIF događaji — live, upcoming i replay · Every BIF event live stream and replay.",
+    type: "website",
+    url: "/events",
+  },
+};
 
 export default async function EventsPage() {
   const events = await getEvents();
@@ -14,6 +31,21 @@ export default async function EventsPage() {
 
   return (
     <>
+      <JsonLd
+        data={[
+          collectionPageSchema({
+            url: "/events",
+            name: "BIF Events · Live PPV i Replay",
+            description:
+              "Lista svih Balkan Influence Fighting događaja sa live stream i replay opcijama.",
+            events: events.map((e) => ({ slug: e.slug, title: e.title })),
+          }),
+          breadcrumbSchema([
+            { name: "BIF.TV", href: "/" },
+            { name: "Events" },
+          ]),
+        ]}
+      />
       <Header />
       <main className="max-w-6xl mx-auto px-6 py-16">
         <h1 className="font-oswald font-extrabold text-5xl md:text-6xl uppercase tracking-wider mb-4">
