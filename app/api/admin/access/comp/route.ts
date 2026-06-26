@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { isAdminRequest } from "@/lib/admin-auth";
 import { issueCompAccessToken } from "@/lib/access";
 import { supabaseAdmin } from "@/lib/supabase-server";
+import { sendEmail } from "@/lib/email";
+import { compPassEmail } from "@/lib/email-templates";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -46,7 +48,7 @@ export async function POST(req: Request) {
   const supabase = supabaseAdmin();
   const { data: ev } = await supabase
     .from("events")
-    .select("id")
+    .select("id, title")
     .eq("slug", eventSlug)
     .maybeSingle();
   if (!ev) {
@@ -54,15 +56,37 @@ export async function POST(req: Request) {
   }
 
   try {
+    const expiresAt = new Date(Date.now() + hours * 60 * 60 * 1000);
     const token = await issueCompAccessToken({
       email,
       eventId: ev.id,
       passType,
-      expiresAt: new Date(Date.now() + hours * 60 * 60 * 1000),
+      expiresAt,
     });
     const base =
       process.env.NEXT_PUBLIC_SITE_URL ?? "https://biftv.vercel.app";
-    return NextResponse.json({ token, watchUrl: `${base}/watch/${token}` });
+    const watchUrl = `${base}/watch/${token}`;
+
+    const tpl = compPassEmail({
+      eventTitle: ev.title,
+      watchUrl,
+      passType,
+      expiresAt: expiresAt.toISOString(),
+    });
+    const mail = await sendEmail({
+      to: email,
+      subject: tpl.subject,
+      html: tpl.html,
+      text: tpl.text,
+      tags: [{ name: "type", value: "comp_pass" }],
+    });
+
+    return NextResponse.json({
+      token,
+      watchUrl,
+      emailSent: mail.ok,
+      emailError: mail.ok ? undefined : mail.error,
+    });
   } catch (err) {
     console.error("[admin/access/comp] insert failed:", err);
     return NextResponse.json(

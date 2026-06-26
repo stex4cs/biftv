@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
+import { sendEmail } from "@/lib/email";
+import { welcomeEmail } from "@/lib/email-templates";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,9 +24,11 @@ export async function POST(req: Request) {
   }
 
   const supabase = supabaseAdmin();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("email_subscribers")
-    .upsert({ email, source }, { onConflict: "email" });
+    .upsert({ email, source }, { onConflict: "email", ignoreDuplicates: false })
+    .select("email, subscribed_at")
+    .maybeSingle();
 
   if (error) {
     console.error("[subscribe] insert failed:", error);
@@ -32,6 +36,24 @@ export async function POST(req: Request) {
       { error: "Greška, pokušaj ponovo." },
       { status: 500 },
     );
+  }
+
+  // Only send welcome on fresh signups (subscribed_at within last 60s).
+  const isFresh =
+    data?.subscribed_at &&
+    Date.now() - new Date(data.subscribed_at).getTime() < 60_000;
+  if (isFresh) {
+    const tpl = welcomeEmail({
+      siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "https://biftv.vercel.app",
+    });
+    // Fire-and-forget — don't block the response on email send.
+    void sendEmail({
+      to: email,
+      subject: tpl.subject,
+      html: tpl.html,
+      text: tpl.text,
+      tags: [{ name: "type", value: "welcome" }],
+    });
   }
 
   return NextResponse.json({ ok: true });

@@ -7,6 +7,8 @@ import { ADMIN_COOKIE_NAME, verifyAdminSession } from "./admin-session";
 import { supabaseAdmin } from "./supabase-server";
 import { mux } from "./mux";
 import { issueCompAccessToken } from "./access";
+import { sendEmail } from "./email";
+import { compPassEmail, broadcastEmail } from "./email-templates";
 
 async function requireAdmin() {
   const cookie = cookies().get(ADMIN_COOKIE_NAME)?.value;
@@ -229,17 +231,95 @@ export async function issueCompPassAction(
   }
 
   try {
-    await issueCompAccessToken({
+    const expiresAt = new Date(Date.now() + hours * 60 * 60 * 1000);
+    const token = await issueCompAccessToken({
       email,
       eventId,
       passType,
-      expiresAt: new Date(Date.now() + hours * 60 * 60 * 1000),
+      expiresAt,
     });
+
+    const supabase = supabaseAdmin();
+    const { data: ev } = await supabase
+      .from("events")
+      .select("title")
+      .eq("id", eventId)
+      .maybeSingle();
+
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL ?? "https://biftv.vercel.app";
+    const watchUrl = `${siteUrl}/watch/${token}`;
+    const tpl = compPassEmail({
+      eventTitle: ev?.title ?? "BIF Event",
+      watchUrl,
+      passType,
+      expiresAt: expiresAt.toISOString(),
+    });
+    await sendEmail({
+      to: email,
+      subject: tpl.subject,
+      html: tpl.html,
+      text: tpl.text,
+      tags: [{ name: "type", value: "comp_pass" }],
+    });
+
     revalidatePath("/admin/passes");
     return { ok: true };
   } catch (err) {
     return { ok: false, error: (err as Error).message };
   }
+}
+
+export async function broadcastAction(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  await requireAdmin();
+  const subject = String(formData.get("subject") ?? "").trim();
+  const headline = String(formData.get("headline") ?? "").trim();
+  const bodyMd = String(formData.get("body") ?? "").trim();
+  const ctaLabel = String(formData.get("cta_label") ?? "").trim();
+  const ctaUrl = String(formData.get("cta_url") ?? "").trim();
+
+  if (!subject || !headline || !bodyMd) {
+    return { ok: false, error: "Subject, headline i body su obavezni." };
+  }
+
+  const supabase = supabaseAdmin();
+  const { data: subs } = await supabase
+    .from("email_subscribers")
+    .select("email");
+  const recipients = (subs ?? []).map((s) => s.email).filter(Boolean);
+  if (recipients.length === 0) {
+    return { ok: false, error: "Nema subscriber-a u listi." };
+  }
+
+  const tpl = broadcastEmail({
+    subject,
+    headline,
+    bodyMd,
+    ctaLabel: ctaLabel || undefined,
+    ctaUrl: ctaUrl || undefined,
+  });
+
+  let sent = 0;
+  let failed = 0;
+  for (const email of recipients) {
+    const res = await sendEmail({
+      to: email,
+      subject: tpl.subject,
+      html: tpl.html,
+      text: tpl.text,
+      tags: [{ name: "type", value: "broadcast" }],
+    });
+    if (res.ok) sent++;
+    else failed++;
+  }
+
+  if (sent === 0) {
+    return { ok: false, error: `Svi mailovi pali (${failed} fail).` };
+  }
+  return { ok: true };
 }
 
 export async function revokePassAction(formData: FormData): Promise<void> {
