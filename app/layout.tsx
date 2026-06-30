@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import MetaPixel from "@/components/MetaPixel";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
+import CookieBanner from "@/components/CookieBanner";
 import JsonLd from "@/components/JsonLd";
 import { organizationSchema, websiteSchema } from "@/lib/schema";
 
@@ -110,6 +111,7 @@ export default function RootLayout({
       </head>
       <body>
         {children}
+        <CookieBanner />
         <MetaPixel />
         <GoogleAnalytics />
       </body>

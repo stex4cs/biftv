@@ -2,7 +2,8 @@
 
 import Script from "next/script";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { hasConsent, onConsentChanged } from "@/lib/consent";
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
@@ -14,7 +15,15 @@ declare global {
 }
 
 export default function GoogleAnalytics() {
-  if (!GA_ID) return null;
+  const [allowed, setAllowed] = useState(false);
+
+  useEffect(() => {
+    setAllowed(hasConsent("analytics"));
+    return onConsentChanged((s) => setAllowed(s.analytics));
+  }, []);
+
+  if (!GA_ID || !allowed) return null;
+
   return (
     <>
       <Script

@@ -2,7 +2,8 @@
 
 import Script from "next/script";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { hasConsent, onConsentChanged } from "@/lib/consent";
 
 const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID;
 
@@ -17,7 +18,15 @@ declare global {
 }
 
 export default function MetaPixel() {
-  if (!PIXEL_ID) return null;
+  const [allowed, setAllowed] = useState(false);
+
+  useEffect(() => {
+    setAllowed(hasConsent("marketing"));
+    return onConsentChanged((s) => setAllowed(s.marketing));
+  }, []);
+
+  if (!PIXEL_ID || !allowed) return null;
+
   return (
     <>
       <Script id="meta-pixel" strategy="afterInteractive">
